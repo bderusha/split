@@ -1,3 +1,30 @@
+## 0.4.3 (July 8, 2012)
+
+Features:
+
+  - redis failover now recovers from all redis-related exceptions
+
+## 0.4.2 (June 1, 2012)
+
+Features:
+
+  - Now works with v3.0 of redis gem
+
+Bugfixes:
+
+  - Fixed redis failover on Rubinius
+
+## 0.4.1 (April 6, 2012)
+
+Features:
+
+  - Added configuration option to disable Split testing (@ilyakatz, #45)
+
+Bugfixes:
+
+  - Fix weights for existing experiments (@andreas, #40)
+  - Fixed dashboard range error (@andrew, #42)
+
 ## 0.4.0 (March 7, 2012)
 
 **IMPORTANT**
