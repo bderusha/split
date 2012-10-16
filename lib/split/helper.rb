@@ -29,8 +29,12 @@ module Split
       return unless (experiment = Split::Experiment.find(experiment_name))
       if alternative_name = ab_user.get_key(experiment.key)
         alternative = Split::Alternative.new(alternative_name, experiment_name)
-        alternative.increment_completion
-        ab_user.delete_key(experiment_name) if options[:reset]
+        alternative.increment_completion unless ab_user.get_finished(experiment.key)
+        ab_user.set_finished(experiment.key)
+        if options[:reset]
+          ab_user.delete_key(experiment.key)
+          ab_user.delete_finished(experiment.key)
+        end
       end
     rescue => e
       raise unless Split.configuration.db_failover

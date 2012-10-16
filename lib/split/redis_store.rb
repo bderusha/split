@@ -10,7 +10,6 @@ module Split
 
     def get_key(name)
       @redis.hget("user_store:#{@identifier}", name)
-
     end
 
     def set_key(name, value)
@@ -27,6 +26,22 @@ module Split
 
     def to_hash
       @redis.hgetall("user_store:#{@identifier}")
+    end
+
+    def get_finished(name)
+      @redis.hget("user_store:#{@identifier}:finished", name)
+    end
+
+    def set_finished(name, value=true)
+      @redis.hset("user_store:#{@identifier}:finished", name, value)
+    end
+
+    def get_finished_keys
+      @redis.hkeys("user_store:#{@identifier}:finished")
+    end
+
+    def delete_finished(name)
+      @redis.hdel("user_store:#{@identifier}:finished", name)
     end
 
     def set_id(id)
