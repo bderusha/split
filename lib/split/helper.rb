@@ -3,6 +3,7 @@ module Split
     attr_accessor :ab_user
 
     def ab_test(experiment_name, control, *alternatives)
+      Split.redis.sadd("#{experiment_name}:user_agents", ab_user.user_agent)
 
       puts 'WARNING: You should always pass the control alternative through as the second argument with any other alternatives as the third because the order of the hash is not preserved in ruby 1.8' if RUBY_VERSION.match(/1\.8/) && alternatives.length.zero?
       ret = if Split.configuration.enabled
@@ -36,7 +37,6 @@ module Split
           ab_user.delete_finished(experiment.key)
         end
         Split.redis.sadd("#{experiment.key}:finishers", ab_user.identifier)
-        Split.redis.sadd("#{experiment.key}:user_agents", ab_user.user_agent)
       end
     rescue => e
       raise unless Split.configuration.db_failover
