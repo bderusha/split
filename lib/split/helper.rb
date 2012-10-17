@@ -35,6 +35,8 @@ module Split
           ab_user.delete_key(experiment.key)
           ab_user.delete_finished(experiment.key)
         end
+        Split.redis.sadd("#{experiment.key}:finishers", ab_user.identifier)
+        Split.redis.sadd("#{experiment.key}:user_agents", ab_user.user_agent)
       end
     rescue => e
       raise unless Split.configuration.db_failover
