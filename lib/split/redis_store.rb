@@ -4,7 +4,8 @@ module Split
     attr_accessor :identifier
     attr_accessor :user_agent
    
-    def initialize(redis)
+    def initialize(redis, session)
+      raise SessionNotFoundError if session.nil?
       @redis = redis
       @identifier = nil
       @user_agent = nil
@@ -53,5 +54,9 @@ module Split
     def set_user_agent(agent)
       @user_agent = agent
     end
+
+    class SessionNotFoundError < StandardError
+    end
+    
   end
 end

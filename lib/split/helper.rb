@@ -108,6 +108,19 @@ module Split
       end
     end
 
+    ##NEW INCLUDE METHOD
+
+    def allowed_user_agent?
+      allowed = false
+      begin
+        if Split.configuration.allowed_user_agent_regex
+          allowed = !(request.user_agent =~ Split.configuration.robot_regex).nil?
+        end
+        allowed
+      rescue NameError
+        false
+      end
+    end
 
     protected
 

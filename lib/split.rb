@@ -63,7 +63,7 @@ module Split
     when :session_store
       Split::SessionStore.new(session)
     when :redis_store
-      Split::RedisStore.new(Split.redis)
+      Split::RedisStore.new(Split.redis, session)
     else
       raise "user_store type '#{Split.configuration.user_store}' unrecognized"
     end
