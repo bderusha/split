@@ -3,8 +3,6 @@ module Split
     attr_accessor :ab_user
 
     def ab_test(experiment_name, control, *alternatives)
-      Split.redis.sadd("#{experiment_name}:user_agents", ab_user.user_agent)
-
       puts 'WARNING: You should always pass the control alternative through as the second argument with any other alternatives as the third because the order of the hash is not preserved in ruby 1.8' if RUBY_VERSION.match(/1\.8/) && alternatives.length.zero?
       ret = if Split.configuration.enabled
               experiment_variable(alternatives, control, experiment_name)
@@ -83,6 +81,14 @@ module Split
     end
 
     def is_robot?
+      Split.redis.hset("user agents", request.user_agent, request.user_agent =~ Split.configuration.robot_regex)
+      Split.redis.incr("user agents:#{request.user_agent}")
+      begin
+        Split.redis.rpush("user agents:bots", request.user_agent) if request.user_agent =~ Split.configuration.robot_regex 
+      rescue NameError
+        puts 'Split Error: NameError'
+      end
+
       begin
         request.user_agent =~ Split.configuration.robot_regex
       rescue NameError
