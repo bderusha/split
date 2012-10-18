@@ -2,13 +2,10 @@ module Split
   class RedisStore
     attr_accessor :redis
     attr_accessor :identifier
-    attr_accessor :user_agent
    
-    def initialize(redis, session)
-      raise SessionNotFoundError if session.nil?
+    def initialize(redis)
       @redis = redis
       @identifier = nil
-      @user_agent = nil
     end
 
     def get_key(name)
@@ -50,13 +47,5 @@ module Split
     def set_id(id)
       @identifier = id.to_s
     end
-
-    def set_user_agent(agent)
-      @user_agent = agent
-    end
-
-    class SessionNotFoundError < StandardError
-    end
-    
   end
 end

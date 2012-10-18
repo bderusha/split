@@ -55,7 +55,7 @@ module Split
     end
 
     def exclude_visitor?
-      is_robot? or is_ignored_ip_address?
+      !allowed_user_agent? or is_robot? or is_ignored_ip_address?
     end
 
     def not_allowed_to_test?(experiment_key)
@@ -114,7 +114,7 @@ module Split
       allowed = false
       begin
         if Split.configuration.allowed_user_agent_regex
-          allowed = !(request.user_agent =~ Split.configuration.robot_regex).nil?
+          allowed = !(request.user_agent =~ Split.configuration.allowed_user_agent_regex).nil?
         end
         allowed
       rescue NameError
