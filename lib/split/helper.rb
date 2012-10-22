@@ -158,11 +158,13 @@ module Split
               ret = ab_user.get_key(experiment.key)
             else
               alternative = experiment.next_alternative
-              alternative.increment_participation
-              Split.redis.hset("particication", request.user_agent, 1)
-              Split.redis.incr("particication:#{request.user_agent}")
-              Split.redis.lpush("particication:#{request.user_agent}:ab_users", ab_user.identifier)
-              Split.redis.lpush("particication:#{request.user_agent}:ips", request.remote_ip)
+              if ab_user.is_confirmed?
+                alternative.increment_participation
+                Split.redis.hset("particication", request.user_agent, 1)
+                Split.redis.incr("particication:#{request.user_agent}")
+                Split.redis.lpush("particication:#{request.user_agent}:ab_users", ab_user.identifier)
+                Split.redis.lpush("particication:#{request.user_agent}:ips", request.remote_ip)
+              end
               begin_experiment(experiment, alternative.name)
               ret = alternative.name
             end

@@ -47,5 +47,24 @@ module Split
     def set_id(id)
       @identifier = id.to_s
     end
+
+    def confirm_js()
+      unless @redis.get("user_store:#{@identifier}:confirmed")
+        @redis.set("user_store:#{@identifier}:confirmed", true)
+        keys = get_keys()
+        keys.each do |key|
+          exp = Split::Experiment.find(key)
+          if exp
+            alts = exp.alternatives
+            chosen_alt = get_key(exp.key)
+            alts.each{|alt| alt.increment_participation if alt.to_s == chosen_alt}
+          end
+        end
+      end
+    end
+
+    def is_confirmed?()
+      @redis.get("user_store:#{@identifier}:confirmed")
+    end
   end
 end
