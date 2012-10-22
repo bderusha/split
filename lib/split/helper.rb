@@ -122,6 +122,20 @@ module Split
       end
     end
 
+    def check_session
+      has_sesh = nil
+      begin
+        has_sesh = session[:split]
+      rescue
+        puts 'SPLIT ERROR: No Session Found'
+      end
+      if has_sesh.blank?
+        Split.redis.hset('bots', request.user_agent, exclude_visitor?)
+      else
+        Split.redis.hset('nonbots', request.user_agent, exclude_visitor?)
+      end
+    end
+
     protected
 
     def control_variable(control)
