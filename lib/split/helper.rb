@@ -24,7 +24,7 @@ module Split
     end
 
     def finished(experiment_name, options = {:reset => true})
-      return if exclude_visitor? or !Split.configuration.enabled
+      return if exclude_visitor? or !Split.configuration.enabled or !ab_user.is_confirmed?
       return unless (experiment = Split::Experiment.find(experiment_name))
       if alternative_name = ab_user.get_key(experiment.key)
         alternative = Split::Alternative.new(alternative_name, experiment_name)
