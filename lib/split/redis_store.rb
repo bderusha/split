@@ -49,6 +49,8 @@ module Split
     end
 
     def confirm_js()
+      puts "SPLIT::HELPER::AB_USER::CONFIRM_JS"
+      puts @identifier
       unless @redis.get("user_store:#{@identifier}:confirmed")
         @redis.set("user_store:#{@identifier}:confirmed", true)
         keys = get_keys()
@@ -64,7 +66,7 @@ module Split
     end
 
     def is_confirmed?()
-      @redis.get("user_store:#{@identifier}:confirmed")
+      !@redis.get("user_store:#{@identifier}:confirmed").nil?
     end
   end
 end
