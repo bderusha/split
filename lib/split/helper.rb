@@ -24,9 +24,16 @@ module Split
     end
 
     def finished(experiment_name, options = {:reset => true})
+      puts 'FINISHED CALLED'
+      puts exclude_visitor?
+      puts !Split.configuration.enabled
+      puts !ab_user.is_confirmed?
       return if exclude_visitor? or !Split.configuration.enabled or !ab_user.is_confirmed?
+      puts "NOT EXCLUDED"
       return unless (experiment = Split::Experiment.find(experiment_name))
+      puts "Experiment Found"
       if alternative_name = ab_user.get_key(experiment.key)
+        puts "Alternative Found"
         alternative = Split::Alternative.new(alternative_name, experiment_name)
         alternative.increment_completion unless ab_user.get_finished(experiment.key)
         ab_user.set_finished(experiment.key)
@@ -81,14 +88,6 @@ module Split
     end
 
     def is_robot?
-      Split.redis.hset("user agents", request.user_agent, request.user_agent =~ Split.configuration.robot_regex)
-      Split.redis.incr("user agents:#{request.user_agent}")
-      begin
-        Split.redis.rpush("user agents:bots", request.user_agent) if request.user_agent =~ Split.configuration.robot_regex 
-      rescue NameError
-        puts 'Split Error: NameError'
-      end
-
       begin
         request.user_agent =~ Split.configuration.robot_regex
       rescue NameError
@@ -111,6 +110,7 @@ module Split
     ##NEW INCLUDE METHOD
 
     def allowed_user_agent?
+      return true unless Rails.env.production?
       allowed = false
       begin
         if Split.configuration.allowed_user_agent_regex
@@ -119,20 +119,6 @@ module Split
         allowed
       rescue NameError
         false
-      end
-    end
-
-    def check_session
-      has_sesh = nil
-      begin
-        has_sesh = session[:split]
-      rescue
-        puts 'SPLIT ERROR: No Session Found'
-      end
-      if has_sesh.blank?
-        Split.redis.hset('bots', request.user_agent, exclude_visitor?)
-      else
-        Split.redis.hset('nonbots', request.user_agent, exclude_visitor?)
       end
     end
 
