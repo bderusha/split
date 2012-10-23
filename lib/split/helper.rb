@@ -146,10 +146,11 @@ module Split
               alternative = experiment.next_alternative
               if ab_user.is_confirmed?
                 alternative.increment_participation
-                Split.redis.hset("participation", request.user_agent, 1)
-                Split.redis.incr("participation:#{request.user_agent}")
-                Split.redis.lpush("participation:#{request.user_agent}:ab_users", ab_user.identifier)
-                Split.redis.lpush("participation:#{request.user_agent}:ips", request.remote_ip)
+                puts "Helper: pre save participation data"
+                puts request.user_agent
+                puts ab_user.identifier
+                puts request.remote_ip
+                Split::Alternative.save_participation_data(request.user_agent, ab_user.identifier, request.remote_ip)
               end
               begin_experiment(experiment, alternative.name)
               ret = alternative.name

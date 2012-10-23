@@ -48,7 +48,7 @@ module Split
       @identifier = id.to_s
     end
 
-    def confirm_js()
+    def confirm_js(user_agent, remote_ip)
       puts "SPLIT::HELPER::AB_USER::CONFIRM_JS"
       puts @identifier
       if @redis.get("user_store:#{@identifier}:confirmed").nil?
@@ -59,7 +59,16 @@ module Split
           if exp
             alts = exp.alternatives
             chosen_alt = get_key(exp.key)
-            alts.each{|alt| alt.increment_participation if alt.to_s == chosen_alt}
+            alts.each do |alt|
+              if alt.to_s == chosen_alt
+                alt.increment_participation
+                puts "RedisStore: pre save participation data"
+                puts user_agent
+                puts @identifier
+                puts remote_ip
+                Split::Alternative.save_participation_data(user_agent, @identifier, remote_ip)
+              end
+            end
           end
         end
       end

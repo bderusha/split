@@ -43,6 +43,16 @@ module Split
       Split.redis.hincrby key, 'completed_count', 1
     end
 
+    def self.save_participation_data(user_agent, ab_user_id, remote_ip)
+      puts "Saving participation data"
+      puts user_agent
+      puts ab_user_id
+      puts remote_ip
+      Split.redis.hincrby("participation", user_agent, 1)
+      Split.redis.lpush("participation:#{user_agent}:ab_users", ab_user_id)
+      Split.redis.lpush("participation:#{user_agent}:ips", remote_ip)
+    end
+
     def control?
       experiment.control.name == self.name
     end
@@ -101,6 +111,7 @@ module Split
     def self.hash_with_correct_values?(name)
       Hash === name && String === name.keys.first && Float(name.values.first) rescue false
     end
+
 
     private
 
