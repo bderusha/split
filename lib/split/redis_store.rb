@@ -2,10 +2,12 @@ module Split
   class RedisStore
     attr_accessor :redis
     attr_accessor :identifier
+    attr_accessor :robot_override
    
     def initialize(redis)
       @redis = redis
       @identifier = nil
+      @robot_override = false
     end
 
     def get_key(name)
@@ -44,8 +46,9 @@ module Split
       @redis.hdel("user_store:#{@identifier}:finished", name)
     end
 
-    def set_id(id)
+    def set_id(id, robot_override = false)
       @identifier = id.to_s
+      @robot_override = robot_override
     end
 
     def confirm_js(user_agent, remote_ip)

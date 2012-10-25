@@ -66,6 +66,11 @@ module Split
     end
 
     def exclude_visitor?
+      puts 'exclude_visitor'
+      puts !allowed_user_agent?
+      puts is_robot?
+      puts is_ignored_ip_address?
+      puts 'finished running exclude'
       !allowed_user_agent? or is_robot? or is_ignored_ip_address?
     end
 
@@ -92,14 +97,17 @@ module Split
     end
 
     def is_robot?
+      return false if ab_user.robot_override
       begin
         request.user_agent =~ Split.configuration.robot_regex
       rescue NameError
+        puts "is_robot? Rescued"
         false
       end
     end
 
     def is_ignored_ip_address?
+      return false if ab_user.robot_override
       begin
         if Split.configuration.ignore_ip_addresses.any?
           Split.configuration.ignore_ip_addresses.include?(request.ip)
@@ -107,21 +115,22 @@ module Split
           false
         end
       rescue NameError
+        puts "is_ignored_ip_address? Rescued"
         false
       end
     end
 
-    ##NEW INCLUDE METHOD
-
     def allowed_user_agent?
-      return true unless Rails.env.production?
+      return true if ab_user.robot_override
       allowed = false
       begin
+        puts request.user_agent
         if Split.configuration.allowed_user_agent_regex
           allowed = !(request.user_agent =~ Split.configuration.allowed_user_agent_regex).nil?
         end
         allowed
       rescue NameError
+        puts "allowed_user_agent? RESCUED"
         false
       end
     end
@@ -145,9 +154,7 @@ module Split
             puts "forced_alternative"
             ret = forced_alternative
           else
-            puts "experiment with control if true..."
-            puts exclude_visitor?
-            puts not_allowed_to_test?(experiment.key)
+            puts "experiment with control... this is bad" if exclude_visitor? or not_allowed_to_test?(experiment.key)
             clean_old_versions(experiment)
             begin_experiment(experiment) if exclude_visitor? or not_allowed_to_test?(experiment.key)
 
