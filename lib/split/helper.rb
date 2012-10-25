@@ -146,10 +146,14 @@ module Split
               alternative = experiment.next_alternative
               if ab_user.is_confirmed?
                 alternative.increment_participation
-                puts "Helper: pre save participation data"
-                puts request.user_agent
-                puts ab_user.identifier
-                puts request.remote_ip
+
+                ##check for request object and create dummy if none (aka when you're in the console)
+                begin
+                  request
+                rescue
+                  request = ActionDispatch::Request.new(:url => '')
+                end
+
                 Split::Alternative.save_participation_data(request.user_agent, ab_user.identifier, request.remote_ip)
               end
               begin_experiment(experiment, alternative.name)
@@ -158,6 +162,7 @@ module Split
           end
         end
       rescue => e
+        puts e
         raise unless Split.configuration.db_failover
         Split.configuration.db_failover_on_db_error.call(e)
         ret = control_variable(control)
