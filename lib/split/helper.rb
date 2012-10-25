@@ -3,10 +3,14 @@ module Split
     attr_accessor :ab_user
 
     def ab_test(experiment_name, control, *alternatives)
+      puts "RUNNING AB TEST"
+      Rails.logger.debug "Running AB Test"
       puts 'WARNING: You should always pass the control alternative through as the second argument with any other alternatives as the third because the order of the hash is not preserved in ruby 1.8' if RUBY_VERSION.match(/1\.8/) && alternatives.length.zero?
       ret = if Split.configuration.enabled
+              Rails.logger.debug "choosing alternatives"
               experiment_variable(alternatives, control, experiment_name)
             else
+              Rails.logger.debug "control only"
               control_variable(control)
             end
 
@@ -24,16 +28,16 @@ module Split
     end
 
     def finished(experiment_name, options = {:reset => true})
-      puts 'FINISHED CALLED'
-      puts exclude_visitor?
-      puts !Split.configuration.enabled
-      puts !ab_user.is_confirmed?
+      Rails.logger.debug 'FINISHED CALLED'
+      Rails.logger.debug exclude_visitor?
+      Rails.logger.debug !Split.configuration.enabled
+      Rails.logger.debug !ab_user.is_confirmed?
       return if exclude_visitor? or !Split.configuration.enabled or !ab_user.is_confirmed?
-      puts "NOT EXCLUDED"
+      Rails.logger.debug "NOT EXCLUDED"
       return unless (experiment = Split::Experiment.find(experiment_name))
-      puts "Experiment Found"
+      Rails.logger.debug "Experiment Found"
       if alternative_name = ab_user.get_key(experiment.key)
-        puts "Alternative Found"
+        Rails.logger.debug "Alternative Found"
         alternative = Split::Alternative.new(alternative_name, experiment_name)
         alternative.increment_completion unless ab_user.get_finished(experiment.key)
         ab_user.set_finished(experiment.key)
@@ -125,26 +129,37 @@ module Split
     protected
 
     def control_variable(control)
+      Rails.logger.debug "running control_variable"
       Hash === control ? control.keys.first : control
     end
 
     def experiment_variable(alternatives, control, experiment_name)
+      Rails.logger.debug "running experiment_variable"
       begin
         experiment = Split::Experiment.find_or_create(experiment_name, *([control] + alternatives))
         if experiment.winner
+          Rails.logger.debug "winner"
           ret = experiment.winner.name
         else
           if forced_alternative = override(experiment.name, experiment.alternative_names)
+            Rails.logger.debug "forced_alternative"
             ret = forced_alternative
           else
+            Rails.logger.debug "experiment with control if true..."
+            Rails.logger.debug exclude_visitor?
+            Rails.logger.debug not_allowed_to_test?(experiment.key)
             clean_old_versions(experiment)
             begin_experiment(experiment) if exclude_visitor? or not_allowed_to_test?(experiment.key)
 
             if ab_user.get_key(experiment.key)
+              Rails.logger.debug "Key Exists"
               ret = ab_user.get_key(experiment.key)
             else
+              Rails.logger.debug "No Key... choose alt"
               alternative = experiment.next_alternative
+              Rails.logger.debug "Next line 'confirmed' if true"
               if ab_user.is_confirmed?
+                Rails.logger.debug "confirmed"
                 alternative.increment_participation
 
                 ##check for request object and create dummy if none (aka when you're in the console)
@@ -156,6 +171,7 @@ module Split
 
                 Split::Alternative.save_participation_data(request.user_agent, ab_user.identifier, request.remote_ip)
               end
+              Rails.logger.debug "Save experiment data"
               begin_experiment(experiment, alternative.name)
               ret = alternative.name
             end
@@ -163,6 +179,8 @@ module Split
         end
       rescue => e
         puts e
+        Rails.logger.debug "Rescued"
+        Rails.logger.debug e
         raise unless Split.configuration.db_failover
         Split.configuration.db_failover_on_db_error.call(e)
         ret = control_variable(control)
