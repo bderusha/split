@@ -3,14 +3,13 @@ module Split
     attr_accessor :ab_user
 
     def ab_test(experiment_name, control, *alternatives)
-      puts "RUNNING AB TEST"
-      puts "Running AB Test"
+      puts "Running AB Test: #{experiment_name}"
       puts 'WARNING: You should always pass the control alternative through as the second argument with any other alternatives as the third because the order of the hash is not preserved in ruby 1.8' if RUBY_VERSION.match(/1\.8/) && alternatives.length.zero?
       ret = if Split.configuration.enabled
-              puts "choosing alternatives"
+              puts "choosing from alternatives"
               experiment_variable(alternatives, control, experiment_name)
             else
-              puts "control only"
+              puts "choosing control only"
               control_variable(control)
             end
 
@@ -66,11 +65,11 @@ module Split
     end
 
     def exclude_visitor?
-      puts 'exclude_visitor'
+      puts 'exclude_visitor check'
       puts !allowed_user_agent?
       puts is_robot?
       puts is_ignored_ip_address?
-      puts 'finished running exclude'
+      puts 'finished running exclude_visitor'
       !allowed_user_agent? or is_robot? or is_ignored_ip_address?
     end
 
