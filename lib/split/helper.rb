@@ -142,11 +142,11 @@ module Split
               if ab_user.is_confirmed?
                 alternative.increment_participation
                 ##check for request object and create dummy if none (aka when you're in the console)
-                begin
-                  Split::Alternative.save_participation_data(request.user_agent, ab_user.identifier, request.remote_ip)
-                rescue
-                  puts "error saving detailed participation data: This is not critical"
-                end
+                # begin
+                #   #Split::Alternative.save_participation_data(request.user_agent, ab_user.identifier, request.remote_ip)
+                # rescue
+                #   puts "error saving detailed participation data: This is not critical"
+                # end
               end
               begin_experiment(experiment, alternative.name)
               ret = alternative.name

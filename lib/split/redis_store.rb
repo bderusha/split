@@ -63,7 +63,7 @@ module Split
             alts.each do |alt|
               if alt.to_s == chosen_alt
                 alt.increment_participation
-                Split::Alternative.save_participation_data(user_agent, @identifier, remote_ip)
+                #Split::Alternative.save_participation_data(user_agent, @identifier, remote_ip)
               end
             end
           end
