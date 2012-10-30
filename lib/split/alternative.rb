@@ -44,10 +44,6 @@ module Split
     end
 
     def self.save_participation_data(user_agent, ab_user_id, remote_ip)
-      puts "Saving participation data"
-      puts user_agent
-      puts ab_user_id
-      puts remote_ip
       Split.redis.hincrby("participation", user_agent, 1)
       Split.redis.lpush("participation:#{user_agent}:ab_users", ab_user_id)
       Split.redis.lpush("participation:#{user_agent}:ips", remote_ip)

@@ -3,7 +3,6 @@ module Split
     attr_accessor :ab_user
 
     def ab_test(experiment_name, control, *alternatives)
-      puts "Running AB Test: #{experiment_name}"
       puts 'WARNING: You should always pass the control alternative through as the second argument with any other alternatives as the third because the order of the hash is not preserved in ruby 1.8' if RUBY_VERSION.match(/1\.8/) && alternatives.length.zero?
       ret = if Split.configuration.enabled
               puts "choosing from alternatives"
@@ -27,16 +26,9 @@ module Split
     end
 
     def finished(experiment_name, options = {:reset => true})
-      puts 'FINISHED CALLED'
-      puts exclude_visitor?
-      puts !Split.configuration.enabled
-      puts !ab_user.is_confirmed?
       return if exclude_visitor? or !Split.configuration.enabled or !ab_user.is_confirmed?
-      puts "NOT EXCLUDED"
       return unless (experiment = Split::Experiment.find(experiment_name))
-      puts "Experiment Found"
       if alternative_name = ab_user.get_key(experiment.key)
-        puts "Alternative Found"
         alternative = Split::Alternative.new(alternative_name, experiment_name)
         alternative.increment_completion unless ab_user.get_finished(experiment.key)
         ab_user.set_finished(experiment.key)
@@ -65,11 +57,6 @@ module Split
     end
 
     def exclude_visitor?
-      puts 'exclude_visitor check'
-      puts !allowed_user_agent?
-      puts is_robot?
-      puts is_ignored_ip_address?
-      puts 'finished running exclude_visitor'
       !allowed_user_agent? or is_robot? or is_ignored_ip_address?
     end
 
@@ -100,7 +87,6 @@ module Split
       begin
         request.user_agent =~ Split.configuration.robot_regex
       rescue NameError
-        puts "is_robot? Rescued"
         false
       end
     end
@@ -114,7 +100,6 @@ module Split
           false
         end
       rescue NameError
-        puts "is_ignored_ip_address? Rescued"
         false
       end
     end
@@ -123,13 +108,11 @@ module Split
       return true if ab_user.robot_override
       allowed = false
       begin
-        puts request.user_agent
         if Split.configuration.allowed_user_agent_regex
           allowed = !(request.user_agent =~ Split.configuration.allowed_user_agent_regex).nil?
         end
         allowed
       rescue NameError
-        puts "allowed_user_agent? RESCUED"
         false
       end
     end
@@ -137,56 +120,41 @@ module Split
     protected
 
     def control_variable(control)
-      puts "running control_variable"
       Hash === control ? control.keys.first : control
     end
 
     def experiment_variable(alternatives, control, experiment_name)
-      puts "running experiment_variable"
       begin
         experiment = Split::Experiment.find_or_create(experiment_name, *([control] + alternatives))
         if experiment.winner
-          puts "winner"
           ret = experiment.winner.name
         else
           if forced_alternative = override(experiment.name, experiment.alternative_names)
-            puts "forced_alternative"
             ret = forced_alternative
           else
-            puts "experiment with control... this is bad" if exclude_visitor? or not_allowed_to_test?(experiment.key)
             clean_old_versions(experiment)
             begin_experiment(experiment) if exclude_visitor? or not_allowed_to_test?(experiment.key)
 
             if ab_user.get_key(experiment.key)
-              puts "Key Exists"
               ret = ab_user.get_key(experiment.key)
             else
-              puts "No Key... choose alt"
               alternative = experiment.next_alternative
-              puts "Next line 'confirmed' if true"
               if ab_user.is_confirmed?
-                puts "confirmed"
                 alternative.increment_participation
-
                 ##check for request object and create dummy if none (aka when you're in the console)
                 begin
-                  request
+                  Split::Alternative.save_participation_data(request.user_agent, ab_user.identifier, request.remote_ip)
                 rescue
-                  request = ActionDispatch::Request.new(:url => '')
+                  puts "error saving detailed participation data: This is not critical"
                 end
-
-                Split::Alternative.save_participation_data(request.user_agent, ab_user.identifier, request.remote_ip)
               end
-              puts "Save experiment data"
               begin_experiment(experiment, alternative.name)
               ret = alternative.name
             end
           end
         end
       rescue => e
-        puts e
-        puts "Rescued"
-        puts e
+        puts "RESCUED ERROR: #{e} --- Using control variable"
         raise unless Split.configuration.db_failover
         Split.configuration.db_failover_on_db_error.call(e)
         ret = control_variable(control)
