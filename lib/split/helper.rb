@@ -5,10 +5,8 @@ module Split
     def ab_test(experiment_name, control, *alternatives)
       puts 'WARNING: You should always pass the control alternative through as the second argument with any other alternatives as the third because the order of the hash is not preserved in ruby 1.8' if RUBY_VERSION.match(/1\.8/) && alternatives.length.zero?
       ret = if Split.configuration.enabled
-              puts "choosing from alternatives"
               experiment_variable(alternatives, control, experiment_name)
             else
-              puts "choosing control only"
               control_variable(control)
             end
 
